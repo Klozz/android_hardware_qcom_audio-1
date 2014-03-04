@@ -31,6 +31,7 @@ void audio_extn_extspk_set_voice_vol(void* extn, float vol);
 
 void audio_extn_set_parameters(struct audio_device *adev,
                                struct str_parms *parms);
+bool audio_extn_dedicated_voip_device_prop_check();
 
 #ifndef SPKR_PROT_ENABLED
 #define audio_extn_spkr_prot_init(adev)       (0)
