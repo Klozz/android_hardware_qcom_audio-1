@@ -272,7 +272,7 @@ int enable_audio_route(struct audio_device *adev,
 
     strcpy(mixer_path, use_case_table[usecase->id]);
     platform_add_backend_name(adev->platform, mixer_path, snd_device);
-    ALOGV("%s: apply and update mixer path: %s", __func__, mixer_path);
+    ALOGD("%s: usecase(%d) apply and update mixer path: %s", __func__,  usecase->id, mixer_path);
     audio_route_apply_and_update_path(adev->audio_route, mixer_path);
 
     ALOGV("%s: exit", __func__);
@@ -295,7 +295,7 @@ int disable_audio_route(struct audio_device *adev,
         snd_device = usecase->out_snd_device;
     strcpy(mixer_path, use_case_table[usecase->id]);
     platform_add_backend_name(adev->platform, mixer_path, snd_device);
-    ALOGV("%s: reset and update mixer path: %s", __func__, mixer_path);
+    ALOGD("%s: usecase(%d) reset and update mixer path: %s", __func__, usecase->id, mixer_path);
     audio_route_reset_and_update_path(adev->audio_route, mixer_path);
 
     ALOGV("%s: exit", __func__);
@@ -351,7 +351,7 @@ int enable_snd_device(struct audio_device *adev,
         platform_set_speaker_gain_in_combo(adev, snd_device, true);
     } else {
         const char * dev_path = platform_get_snd_device_name(snd_device);
-        ALOGV("%s: snd_device(%d: %s)", __func__, snd_device, dev_path);
+        ALOGD("%s: snd_device(%d: %s)", __func__, snd_device, dev_path);
         audio_route_apply_and_update_path(adev->audio_route, dev_path);
     }
 
@@ -376,7 +376,7 @@ int disable_snd_device(struct audio_device *adev,
     adev->snd_dev_ref_cnt[snd_device]--;
     if (adev->snd_dev_ref_cnt[snd_device] == 0) {
         const char * dev_path = platform_get_snd_device_name(snd_device);
-        ALOGV("%s: snd_device(%d: %s)", __func__, snd_device, dev_path);
+        ALOGD("%s: snd_device(%d: %s)", __func__, snd_device, dev_path);
 
         audio_extn_dsm_feedback_enable(adev, snd_device, false);
         if ((snd_device == SND_DEVICE_OUT_SPEAKER ||
@@ -1461,7 +1461,7 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
     bool select_new_device = false;
     int status = 0;
 
-    ALOGV("%s: enter: usecase(%d: %s) kvpairs: %s",
+    ALOGD("%s: enter: usecase(%d: %s) kvpairs: %s",
           __func__, out->usecase, use_case_table[out->usecase], kvpairs);
     parms = str_parms_create_str(kvpairs);
     ret = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING, value, sizeof(value));
