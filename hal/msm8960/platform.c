@@ -25,6 +25,7 @@
 #include <audio_hw.h>
 #include <platform_api.h>
 #include "platform.h"
+#include "audio_extn.h"
 
 #define LIB_ACDB_LOADER "libacdbloader.so"
 #define LIB_CSD_CLIENT "libcsd-client.so"
@@ -371,6 +372,8 @@ void *platform_init(struct audio_device *adev)
             my_data->csd_client_init();
         }
     }
+
+    audio_extn_hwdep_cal_send(adev->snd_card, my_data->acdb_handle);
 
     return my_data;
 }
