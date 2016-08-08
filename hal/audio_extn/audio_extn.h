@@ -25,6 +25,13 @@ void audio_extn_extspk_update(void* extn);
 void audio_extn_extspk_set_mode(void* extn, audio_mode_t mode);
 void audio_extn_extspk_set_voice_vol(void* extn, float vol);
 
+#ifndef AUDIO_DEVICE_OUT_FM_TX
+#define AUDIO_DEVICE_OUT_FM_TX 0x8000000
+#endif
+
+void audio_extn_set_parameters(struct audio_device *adev,
+                               struct str_parms *parms);
+
 #ifndef SPKR_PROT_ENABLED
 #define audio_extn_spkr_prot_init(adev)       (0)
 #define audio_extn_spkr_prot_start_processing(snd_device)    (-EINVAL)

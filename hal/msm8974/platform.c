@@ -145,7 +145,7 @@ static int pcm_device_table[AUDIO_USECASE_MAX][2] = {
                               AUDIO_RECORD_PCM_DEVICE},
     [USECASE_AUDIO_RECORD_LOW_LATENCY] = {LOWLATENCY_PCM_DEVICE,
                                           LOWLATENCY_PCM_DEVICE},
-
+    [USECASE_AUDIO_PLAYBACK_FM] = {FM_PLAYBACK_PCM_DEVICE, FM_CAPTURE_PCM_DEVICE},
     [USECASE_VOICE_CALL] = {VOICE_CALL_PCM_DEVICE,
                             VOICE_CALL_PCM_DEVICE},
     [USECASE_VOICE2_CALL] = {VOICE2_CALL_PCM_DEVICE, VOICE2_CALL_PCM_DEVICE},
@@ -201,6 +201,7 @@ static const char * const device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_OUT_VOICE_TX] = "voice-tx",
     [SND_DEVICE_OUT_SPEAKER_PROTECTED] = "speaker-protected",
     [SND_DEVICE_OUT_VOICE_SPEAKER_PROTECTED] = "voice-speaker-protected",
+    [SND_DEVICE_OUT_TRANSMISSION_FM] = "transmission-fm",
 
     /* Capture sound devices */
     [SND_DEVICE_IN_HANDSET_MIC] = "handset-mic",
@@ -255,6 +256,8 @@ static const char * const device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_CAPTURE_VI_FEEDBACK] = "vi-feedback",
     [SND_DEVICE_IN_HANDSET_TMIC] = "three-mic",
     [SND_DEVICE_IN_HANDSET_QMIC] = "quad-mic",
+
+    [SND_DEVICE_IN_CAPTURE_FM] = "capture-fm",
 };
 
 /* ACDB IDs (audio DSP path configuration IDs) for each sound device */
@@ -286,6 +289,7 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_OUT_VOICE_TX] = 45,
     [SND_DEVICE_OUT_SPEAKER_PROTECTED] = 124,
     [SND_DEVICE_OUT_VOICE_SPEAKER_PROTECTED] = 101,
+    [SND_DEVICE_OUT_TRANSMISSION_FM] = 0,
 
     [SND_DEVICE_IN_HANDSET_MIC] = 4,
     [SND_DEVICE_IN_HANDSET_MIC_AEC] = 106,
@@ -339,6 +343,8 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_CAPTURE_VI_FEEDBACK] = 102,
     [SND_DEVICE_IN_HANDSET_TMIC] = 125,
     [SND_DEVICE_IN_HANDSET_QMIC] = 125,
+
+    [SND_DEVICE_IN_CAPTURE_FM] = 0,
 };
 
 struct name_to_index {
@@ -374,6 +380,7 @@ static const struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
     {TO_NAME_INDEX(SND_DEVICE_OUT_VOICE_TTY_FULL_HEADPHONES)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_VOICE_TTY_VCO_HEADPHONES)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_VOICE_TTY_HCO_HANDSET)},
+    {TO_NAME_INDEX(SND_DEVICE_OUT_TRANSMISSION_FM)},
 
     /* in */
     {TO_NAME_INDEX(SND_DEVICE_OUT_SPEAKER_PROTECTED)},
@@ -428,6 +435,7 @@ static const struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
     {TO_NAME_INDEX(SND_DEVICE_IN_CAPTURE_VI_FEEDBACK)},
     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_TMIC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_QMIC)},
+    {TO_NAME_INDEX(SND_DEVICE_IN_CAPTURE_FM)},
 };
 
 static char * backend_tag_table[SND_DEVICE_MAX] = {0};
@@ -442,6 +450,7 @@ static const struct name_to_index usecase_name_index[AUDIO_USECASE_MAX] = {
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_ULL)},
     {TO_NAME_INDEX(USECASE_AUDIO_RECORD)},
     {TO_NAME_INDEX(USECASE_AUDIO_RECORD_LOW_LATENCY)},
+    {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_FM)},
     {TO_NAME_INDEX(USECASE_VOICE_CALL)},
     {TO_NAME_INDEX(USECASE_VOICE2_CALL)},
     {TO_NAME_INDEX(USECASE_VOLTE_CALL)},
@@ -839,6 +848,8 @@ static void set_platform_defaults(struct platform_data * my_data)
     backend_tag_table[SND_DEVICE_IN_BT_SCO_MIC_WB_NREC] = strdup("bt-sco-wb");
     backend_tag_table[SND_DEVICE_OUT_VOICE_TX] = strdup("afe-proxy");
     backend_tag_table[SND_DEVICE_IN_VOICE_RX] = strdup("afe-proxy");
+    backend_tag_table[SND_DEVICE_IN_CAPTURE_FM] = strdup("capture-fm");
+    backend_tag_table[SND_DEVICE_OUT_TRANSMISSION_FM] = strdup("transmission-fm");
 
     hw_interface_table[SND_DEVICE_OUT_HANDSET] = strdup("SLIMBUS_0_RX");
     hw_interface_table[SND_DEVICE_OUT_SPEAKER] = strdup("SLIMBUS_0_RX");
@@ -1771,6 +1782,8 @@ snd_device_t platform_get_output_snd_device(void *platform, audio_devices_t devi
             }
         } else if (devices & (AUDIO_DEVICE_OUT_SPEAKER | AUDIO_DEVICE_OUT_SPEAKER_SAFE)) {
             snd_device = SND_DEVICE_OUT_VOICE_SPEAKER;
+        } else if (devices & AUDIO_DEVICE_OUT_FM_TX) {
+            snd_device = SND_DEVICE_OUT_TRANSMISSION_FM;
         } else if (devices & AUDIO_DEVICE_OUT_EARPIECE) {
             if(adev->voice.hac)
                 snd_device = SND_DEVICE_OUT_VOICE_HAC_HANDSET;
@@ -1806,6 +1819,8 @@ snd_device_t platform_get_output_snd_device(void *platform, audio_devices_t devi
         }
     } else if (devices & AUDIO_DEVICE_OUT_AUX_DIGITAL) {
         snd_device = SND_DEVICE_OUT_HDMI ;
+    } else if (devices & AUDIO_DEVICE_OUT_FM_TX) {
+        snd_device = SND_DEVICE_OUT_TRANSMISSION_FM;
     } else if (devices & AUDIO_DEVICE_OUT_EARPIECE) {
         /*HAC support for voice-ish audio (eg visual voicemail)*/
         if(adev->voice.hac)
@@ -2005,6 +2020,8 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
                 }
             }
         }
+    } else if (source == AUDIO_SOURCE_FM_TUNER) {
+        snd_device = SND_DEVICE_IN_CAPTURE_FM;
     } else if (source == AUDIO_SOURCE_DEFAULT) {
         goto exit;
     }
@@ -2065,6 +2082,8 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
             }
         } else if (in_device & AUDIO_DEVICE_IN_AUX_DIGITAL) {
             snd_device = SND_DEVICE_IN_HDMI_MIC;
+        } else if (in_device & AUDIO_DEVICE_IN_FM_TUNER) {
+            snd_device = SND_DEVICE_IN_CAPTURE_FM;
         } else {
             ALOGE("%s: Unknown input device(s) %#x", __func__, in_device);
             ALOGW("%s: Using default handset-mic", __func__);

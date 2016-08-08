@@ -29,7 +29,18 @@
 #include "platform.h"
 #include "platform_api.h"
 
+#ifndef FM_POWER_OPT
+#define audio_extn_fm_set_parameters(adev, parms) (0)
+#else
+void audio_extn_fm_set_parameters(struct audio_device *adev,
+                                   struct str_parms *parms);
+#endif
 
+void audio_extn_set_parameters(struct audio_device *adev,
+                               struct str_parms *parms)
+{
+   audio_extn_fm_set_parameters(adev, parms);
+}
 
 #ifdef KPI_OPTIMIZE_ENABLED
 typedef int (*perf_lock_acquire_t)(int, int, int*, int);
